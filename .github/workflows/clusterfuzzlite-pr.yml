@@ -25,3 +25,11 @@ jobs:
         with:
           fuzz-seconds: 600
           language: python
+
+      - name: Upload crash artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-crashes
+          path: out/artifacts/
+          retention-days: 30

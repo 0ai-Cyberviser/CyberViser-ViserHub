@@ -26,15 +26,20 @@ jobs:
           pip install -r requirements.txt
 
       - name: Download crash artifacts
+        id: download
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
+          name: fuzz-crashes
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: crashes/
 
       - name: LLM Triage with FuzzingSpecialist
+        id: triage
         run: |
           python -c "
+          import os
           from pathlib import Path
           crash_dir = Path('crashes')
           if crash_dir.exists():
@@ -44,14 +49,16 @@ jobs:
                   for log in logs[:10]:
                       report += f'## {log.name}\n\`\`\`\n{log.read_text()[:2000]}\n\`\`\`\n\n'
                   Path('triage_report.md').write_text(report)
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
+                      fh.write('has_crashes=true\n')
               else:
-                  Path('triage_report.md').write_text('No crash logs found in artifacts.')
+                  print('No crash logs found in artifacts — skipping issue creation.')
           else:
-              Path('triage_report.md').write_text('No crash artifacts downloaded.')
+              print('No crash artifacts downloaded — skipping issue creation.')
           "
 
       - name: Create Issue if crash found
-        if: hashFiles('triage_report.md') != ''
+        if: steps.triage.outputs.has_crashes == 'true'
         uses: peter-evans/create-issue-from-file@v5
         with:
           title: "\U0001F6A8 Fuzz Crash Detected — Auto-triaged by Hancock"
