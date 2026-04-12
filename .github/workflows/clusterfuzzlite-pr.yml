@@ -1,0 +1,37 @@
+name: Continuous Fuzzing (PR)
+
+on:
+  pull_request:
+    paths:
+      - 'hancock_agent.py'
+      - 'fuzzing_agent/**'
+      - 'fuzz_targets/**'
+
+jobs:
+  fuzz-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build fuzz targets with Hancock AI
+        run: |
+          python -c "
+          from fuzzing_agent.specialists.clusterfuzz_integration import generate_clusterfuzzlite_harnesses
+          generate_clusterfuzzlite_harnesses(['hancock_agent'])
+          "
+
+      - name: Run ClusterFuzzLite (PR mode)
+        uses: google/clusterfuzzlite/actions/run_fuzzers@v1
+        with:
+          fuzz-seconds: 600
+          language: python

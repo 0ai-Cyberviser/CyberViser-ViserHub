@@ -1,0 +1,35 @@
+name: Coverage Report
+
+on:
+  schedule:
+    - cron: '0 4 * * *'   # daily at 4 AM UTC
+  workflow_dispatch:
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+          pip install coverage[toml]
+
+      - name: Run tests with coverage
+        run: |
+          python -m pytest tests/ --cov=. --cov-report=html:coverage-html --cov-report=json:coverage.json \
+            --cov-omit=".venv/*,data/*,docs/*,tests/*,fuzzing_agent/docker/*"
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage-html/
+          retention-days: 30

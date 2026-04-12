@@ -1,0 +1,10 @@
+# ClusterFuzzLite configuration for CyberViser Hancock
+# https://google.github.io/clusterfuzzlite/
+language: python
+fuzzing_engine: atheris
+sanitizers:
+  - address
+  - undefined
+  - coverage
+auto_build: true
+coverage: true

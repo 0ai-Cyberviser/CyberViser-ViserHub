@@ -42,5 +42,18 @@ services:
       - "com.cyberviser.project=hancock"
       - "com.cyberviser.version=0.5.0"
 
+  fuzz-env:
+    build:
+      context: ./fuzzing_agent/docker
+    image: hancock-fuzz-env:latest
+    container_name: hancock-fuzz-env
+    volumes:
+      - ./fuzz_targets:/src/fuzz_targets
+      - ./fuzzing_agent:/src/fuzzing_agent
+    environment:
+      - FUZZING_TIMEOUT=86400
+    profiles:
+      - fuzzing
+
 volumes:
   ollama_models:

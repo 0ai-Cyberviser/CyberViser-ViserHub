@@ -1,0 +1,43 @@
+name: Continuous Fuzzing (Batch)
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # every night at 3 AM UTC
+  workflow_dispatch:       # manual trigger
+
+jobs:
+  fuzz-batch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate fresh harnesses via FuzzingSpecialist
+        run: |
+          python -c "
+          from fuzzing_agent.specialists.clusterfuzz_integration import generate_clusterfuzzlite_harnesses
+          generate_clusterfuzzlite_harnesses(['hancock_agent', 'hancock_pipeline', 'hancock_constants'])
+          "
+
+      - name: ClusterFuzzLite Batch Run
+        uses: google/clusterfuzzlite/actions/run_fuzzers@v1
+        with:
+          fuzz-seconds: 43200
+          language: python
+
+      - name: Upload crash artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-crashes
+          path: out/artifacts/
+          retention-days: 30
