@@ -1,0 +1,14 @@
+# Exclude large / unnecessary files from Docker build context
+*.ipynb
+.git
+.github
+.coverage
+__pycache__
+*.pyc
+nb/
+hancock-cpu-adapter/
+docs/
+data/
+*.egg-info
+.env
+.env.*

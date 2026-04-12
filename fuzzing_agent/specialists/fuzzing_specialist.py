@@ -137,10 +137,10 @@ def build_docker_run_cmd(
     return [
         "docker", "run", "--rm",
         "-v", f"{safe_dir}:/src",
+        "-e", f"HANCOCK_FUZZER={fuzzer}",
+        "-e", f"HANCOCK_FUZZ_DURATION={int(duration)}",
         image,
         "python3", "-m", "fuzz_runner",
-        fuzzer,
-        "--time", str(int(duration)),
     ]
 
 
