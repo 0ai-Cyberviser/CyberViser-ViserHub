@@ -30,6 +30,12 @@ jobs:
           generate_clusterfuzzlite_harnesses(['hancock_agent', 'hancock_pipeline', 'hancock_constants'])
           "
 
+      - name: Build fuzz targets
+        uses: google/clusterfuzzlite/actions/build_fuzzers@v1
+        with:
+          language: python
+          build-integration-path: fuzzing_agent/docker
+
       - name: ClusterFuzzLite Batch Run
         uses: google/clusterfuzzlite/actions/run_fuzzers@v1
         with:
