@@ -373,6 +373,9 @@ class TestApiEdgeCases:
                         data=json.dumps({"query": "What is SOC 2?"}),
                         content_type="application/json")
         assert r.status_code == 200
+        d = r.get_json()
+        assert "advice" in d
+        assert d["output"] == "advice"
 
     def test_sigma_query_alias(self, client):
         """Test that 'query' field is accepted as alias for description."""
@@ -380,6 +383,9 @@ class TestApiEdgeCases:
                         data=json.dumps({"query": "Detect LSASS dump"}),
                         content_type="application/json")
         assert r.status_code == 200
+        d = r.get_json()
+        assert "rule" in d
+        assert "model" in d
 
     def test_yara_query_alias(self, client):
         """Test that 'query' field is accepted as alias for description."""
@@ -387,6 +393,9 @@ class TestApiEdgeCases:
                         data=json.dumps({"query": "Cobalt Strike beacon"}),
                         content_type="application/json")
         assert r.status_code == 200
+        d = r.get_json()
+        assert "rule" in d
+        assert "model" in d
 
     def test_ioc_query_alias(self, client):
         """Test that 'query' field is accepted as alias for indicator."""
@@ -394,6 +403,9 @@ class TestApiEdgeCases:
                         data=json.dumps({"query": "malicious.example.com"}),
                         content_type="application/json")
         assert r.status_code == 200
+        d = r.get_json()
+        assert "report" in d
+        assert d["indicator"] == "malicious.example.com"
 
 
 class TestApiEmptyModelResponse:
