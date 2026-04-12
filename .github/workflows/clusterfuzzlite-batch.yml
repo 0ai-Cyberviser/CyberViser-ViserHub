@@ -8,6 +8,8 @@ on:
 jobs:
   fuzz-batch:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -31,7 +33,7 @@ jobs:
       - name: ClusterFuzzLite Batch Run
         uses: google/clusterfuzzlite/actions/run_fuzzers@v1
         with:
-          fuzz-seconds: 43200
+          fuzz-seconds: 43200  # 12-hour nightly batch fuzz run
           language: python
 
       - name: Upload crash artifacts

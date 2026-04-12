@@ -16,22 +16,11 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-
-# Supported fuzzer engines
-SUPPORTED_FUZZERS = ("libfuzzer", "aflpp", "atheris", "honggfuzz")
-
-# Sanitizers that can be enabled during fuzz builds
-SUPPORTED_SANITIZERS = ("address", "undefined", "memory", "coverage")
-
-# Language → base Docker image mapping for OSS-Fuzz projects
-OSS_FUZZ_BASE_IMAGES: dict[str, str] = {
-    "c":      "gcr.io/oss-fuzz-base/base-builder",
-    "c++":    "gcr.io/oss-fuzz-base/base-builder",
-    "python": "gcr.io/oss-fuzz-base/base-builder-python",
-    "go":     "gcr.io/oss-fuzz-base/base-builder-go",
-    "rust":   "gcr.io/oss-fuzz-base/base-builder-rustc",
-    "java":   "gcr.io/oss-fuzz-base/base-builder-jvm",
-}
+from hancock_constants import (
+    SUPPORTED_FUZZERS,
+    SUPPORTED_SANITIZERS,
+    OSS_FUZZ_BASE_IMAGES,
+)
 
 
 def build_harness_prompt(target_repo: str, language: str = "c++") -> str:

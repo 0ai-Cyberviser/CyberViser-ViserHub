@@ -10,6 +10,8 @@ on:
 jobs:
   fuzz-pr:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -33,5 +35,5 @@ jobs:
       - name: Run ClusterFuzzLite (PR mode)
         uses: google/clusterfuzzlite/actions/run_fuzzers@v1
         with:
-          fuzz-seconds: 600
+          fuzz-seconds: 600  # 10-minute PR fuzz run
           language: python

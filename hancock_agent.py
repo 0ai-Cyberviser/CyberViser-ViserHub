@@ -897,7 +897,6 @@ def build_app(client, model: str):
 
         from fuzzing_agent.specialists.fuzzing_specialist import (
             build_harness_prompt,
-            OSS_FUZZ_BASE_IMAGES,
         )
         prompt = build_harness_prompt(target, language)
         messages = [
