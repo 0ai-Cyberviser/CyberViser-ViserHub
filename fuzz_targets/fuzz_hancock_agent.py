@@ -6,7 +6,10 @@ the mode/model dispatch logic in hancock_agent.py.
 
 ClusterFuzzLite entry point: function must be named TestOneInput.
 """
+import os
 import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import atheris
 
 with atheris.instrument_imports():
@@ -18,7 +21,6 @@ def TestOneInput(data: bytes) -> None:
     fdp = atheris.FuzzedDataProvider(data)
 
     # Fuzz /mode and /model CLI command parsing
-    user_input = fdp.ConsumeUnicodeNoSurrogates(256)
     try:
         # Exercise SYSTEMS dict lookup (the mode-switch logic)
         mode = fdp.ConsumeUnicodeNoSurrogates(16).strip()
