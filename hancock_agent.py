@@ -923,11 +923,11 @@ def build_app(client, model: str):
         ):
             _inc("errors_total"); return jsonify({"error": "model returned invalid files mapping"}), 502
         return jsonify({
-            "files":       files,
-            "harness_raw": harness,
-            "target":      target,
-            "language":    language,
-            "model":       model,
+            "files":    files,
+            "harness":  harness,
+            "target":   target,
+            "language": language,
+            "model":    model,
         })
 
     @app.route("/v1/fuzz/triage", methods=["POST"])
