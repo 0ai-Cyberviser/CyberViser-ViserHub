@@ -649,8 +649,26 @@ class TestIoc:
 # ── /v1/fuzz/generate-harness ────────────────────────────────────────────────
 
 class TestFuzzGenerateHarness:
-    def test_fuzz_generate_harness_returns_result(self, client):
-        r = client.post("/v1/fuzz/generate-harness",
+    @pytest.fixture
+    def fuzz_client(self):
+        """Test client whose mock returns valid harness JSON for the harness endpoint."""
+        from unittest.mock import MagicMock, patch
+
+        mock_client = MagicMock()
+        mock_resp = MagicMock()
+        mock_resp.choices[0].message.content = (
+            '{"files": {"fuzz_target.cc": "// harness code"}}'
+        )
+        mock_client.chat.completions.create.return_value = mock_resp
+
+        with patch("hancock_agent.OpenAI", return_value=mock_client):
+            import hancock_agent
+            app = hancock_agent.build_app(mock_client, "mistralai/mistral-7b-instruct-v0.3")
+            app.testing = True
+            return app.test_client()
+
+    def test_fuzz_generate_harness_returns_result(self, fuzz_client):
+        r = fuzz_client.post("/v1/fuzz/generate-harness",
                         data=json.dumps({
                             "target": "https://github.com/example/project",
                             "language": "c++",
@@ -662,17 +680,17 @@ class TestFuzzGenerateHarness:
         assert d["target"] == "https://github.com/example/project"
         assert d["language"] == "c++"
 
-    def test_fuzz_generate_harness_repo_alias(self, client):
+    def test_fuzz_generate_harness_repo_alias(self, fuzz_client):
         """Accepts 'repo' field as alias for 'target'."""
-        r = client.post("/v1/fuzz/generate-harness",
+        r = fuzz_client.post("/v1/fuzz/generate-harness",
                         data=json.dumps({"repo": "my-project", "language": "python"}),
                         content_type="application/json")
         assert r.status_code == 200
         d = r.get_json()
         assert d["target"] == "my-project"
 
-    def test_fuzz_generate_harness_default_language(self, client):
-        r = client.post("/v1/fuzz/generate-harness",
+    def test_fuzz_generate_harness_default_language(self, fuzz_client):
+        r = fuzz_client.post("/v1/fuzz/generate-harness",
                         data=json.dumps({"target": "my-project"}),
                         content_type="application/json")
         assert r.status_code == 200
