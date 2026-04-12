@@ -48,6 +48,7 @@ It operates in three specialist modes and exposes a clean REST API.
 - [Quick Start](#-quick-start)
 - [API Reference](#-api-reference)
 - [Fine-Tuning](#-fine-tuning)
+- [Fuzzing Specialist Mode](#-fuzzing-specialist-mode)
 - [Roadmap](#-roadmap)
 - [Contributing](#-contributing)
 - [License](#-license)
@@ -66,6 +67,7 @@ It operates in three specialist modes and exposes a clean REST API.
 | 🔍 **Sigma** | Sigma detection rule authoring with ATT&CK tagging | ✅ Live |
 | 🦠 **YARA** | YARA malware detection rule authoring | ✅ Live |
 | 🔎 **IOC** | Threat intelligence enrichment for IOCs | ✅ Live |
+| 🐛 **Fuzz** | AI-powered fuzz harness generation, crash triage, coverage-guided mutation | ✅ Live |
 
 ---
 
@@ -139,6 +141,8 @@ Start the server: `python hancock_agent.py --server`
 | `POST` | `/v1/sigma`     | Sigma detection rule generator |
 | `POST` | `/v1/yara`      | YARA malware detection rule generator |
 | `POST` | `/v1/ioc`       | IOC threat intelligence enrichment (IP, domain, URL, hash, email) |
+| `POST` | `/v1/fuzz/generate-harness` | Generate OSS-Fuzz-ready harness for a target repo/module |
+| `POST` | `/v1/fuzz/triage` | Triage fuzz crashes with LLM analysis + patch suggestion |
 | `POST` | `/v1/webhook`   | Ingest alerts from Splunk/Elastic/Sentinel/CrowdStrike |
 
 ### Examples
@@ -178,6 +182,20 @@ curl -X POST http://localhost:5000/v1/ioc \
   -d '{"indicator": "185.220.101.35", "type": "ip"}'
 ```
 
+**Fuzz Harness Generation:**
+```bash
+curl -X POST http://localhost:5000/v1/fuzz/generate-harness \
+  -H "Content-Type: application/json" \
+  -d '{"target": "https://github.com/example/project", "language": "c++"}'
+```
+
+**Fuzz Crash Triage:**
+```bash
+curl -X POST http://localhost:5000/v1/fuzz/triage \
+  -H "Content-Type: application/json" \
+  -d '{"crash_log": "==ERROR: AddressSanitizer: heap-buffer-overflow on address...", "target": "my_parser"}'
+```
+
 **CISO Board Summary:**
 ```bash
 curl -X POST http://localhost:5000/v1/ciso \
@@ -205,6 +223,7 @@ curl -X POST http://localhost:5000/v1/respond \
 /mode sigma     — Sigma detection rule authoring
 /mode yara      — YARA malware detection rule authoring
 /mode ioc       — IOC threat intelligence enrichment
+/mode fuzz      — Fuzzing Specialist (harness gen, crash triage)
 /clear          — clear conversation history
 /history        — show history
 /model <id>     — switch NVIDIA NIM model
@@ -302,6 +321,67 @@ formatter/
 ├── to_mistral_jsonl_v2.py      # v2 formatter
 └── formatter_v3.py             # v3 formatter — merges all sources
 ```
+
+---
+
+## 🐛 Fuzzing Specialist Mode
+
+Hancock includes an AI-powered **Fuzzing Specialist** that auto-generates fuzz harnesses, orchestrates fuzz runs, and triages crashes with LLM-driven root-cause analysis.
+
+### What It Does
+
+1. **Harness Generation** — Analyzes target source code and generates OSS-Fuzz-ready project folders (project.yaml, Dockerfile, build.sh, harness files, corpus seeds)
+2. **Multi-Fuzzer Support** — libFuzzer, AFL++, Atheris (Python), Honggfuzz
+3. **Crash Triage** — Parses AddressSanitizer/UBSan output, identifies CWE, assesses security impact, suggests minimal patches
+4. **Coverage-Guided Mutation** — Hybrid LLM + traditional fuzzing: analyzes coverage maps and generates semantic mutations for low-coverage paths
+5. **ClusterFuzzLite CI/CD** — Every PR and nightly batch run auto-generates harnesses and runs ClusterFuzzLite
+
+### Architecture
+
+```
+fuzzing_agent/
+├── specialists/
+│   ├── fuzzing_specialist.py        # Core harness gen + triage + Docker orchestration
+│   └── clusterfuzz_integration.py   # ClusterFuzzLite bridge
+├── mutators/
+│   └── coverage_guided_mutator.py   # Hybrid LLM + coverage mutation
+├── runners/                         # Local + cloud fuzz orchestration
+├── triage/                          # Crash analysis modules
+├── coverage/                        # Coverage reporting
+├── docker/
+│   └── Dockerfile                   # Pre-installed AFL++, Atheris, clang
+├── data/                            # Fuzz corpora, known crash datasets
+└── tests/                           # Integration tests
+```
+
+### Quick Start
+
+```bash
+# Generate a fuzz harness via API
+curl -X POST http://localhost:5000/v1/fuzz/generate-harness \
+  -H "Content-Type: application/json" \
+  -d '{"target": "https://github.com/example/project", "language": "python"}'
+
+# Triage a crash
+curl -X POST http://localhost:5000/v1/fuzz/triage \
+  -H "Content-Type: application/json" \
+  -d '{"crash_log": "<sanitizer output>", "target": "my_binary"}'
+
+# Use fuzz mode in CLI
+python hancock_agent.py
+# Then: /mode fuzz
+```
+
+### Continuous Fuzzing CI/CD
+
+Every PR and nightly run auto-generates Atheris harnesses and runs ClusterFuzzLite. Crashes are triaged by the LLM and turned into GitHub Issues.
+
+- **PR fuzzing**: `.github/workflows/clusterfuzzlite-pr.yml` (10-min runs)
+- **Nightly batch**: `.github/workflows/clusterfuzzlite-batch.yml` (12-hour runs)
+- **Auto-triage**: `.github/workflows/fuzz-triage.yml` (crash → GitHub Issue)
+- **Coverage reports**: `.github/workflows/coverage-report.yml` (daily)
+
+Setup: `bash scripts/setup-fuzz-ci.sh`
 
 ---
 

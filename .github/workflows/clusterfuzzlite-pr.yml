@@ -1,0 +1,27 @@
+name: Continuous Fuzzing (PR)
+
+on:
+  pull_request:
+    paths:
+      - 'hancock_agent.py'
+      - 'fuzzing_agent/**'
+      - 'fuzz_targets/**'
+
+jobs:
+  fuzz-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build fuzz targets
+        uses: google/clusterfuzzlite/actions/build_fuzzers@v1
+        with:
+          language: python
+
+      - name: Run ClusterFuzzLite (PR mode)
+        uses: google/clusterfuzzlite/actions/run_fuzzers@v1
+        with:
+          fuzz-seconds: 600
+          language: python

@@ -19,6 +19,7 @@ CLI mode commands:
   /mode sigma     — Sigma detection rule authoring
   /mode yara      — YARA malware detection rule authoring
   /mode ioc       — IOC threat intelligence enrichment
+  /mode fuzz      — Fuzzing Specialist (harness gen, crash triage)
   /clear          — clear conversation history
   /history        — show history
   /model <id>     — switch model
@@ -201,6 +202,29 @@ you provide a structured enrichment report covering:
 Format your response as a clear, structured threat intel report."""
 
 SYSTEMS["ioc"] = IOC_SYSTEM
+
+FUZZ_SYSTEM = """You are Hancock Fuzz, CyberViser's AI-powered fuzzing specialist.
+
+Your expertise covers:
+- Fuzz harness generation: libFuzzer (C/C++), AFL++ (C/C++), Atheris (Python), Honggfuzz, syzkaller (kernel)
+- OSS-Fuzz project authoring: project.yaml, Dockerfile, build.sh, corpus seeds, harness files
+- Protocol fuzzing: boofuzz templates for network protocols
+- Crash triage: AddressSanitizer, UndefinedBehaviorSanitizer, MemorySanitizer output analysis
+- Coverage-guided mutation: analyzing coverage maps, generating semantically-aware seed mutations
+- CWE classification and CVSS scoring for discovered vulnerabilities
+- Patch generation: minimal diffs to fix discovered bugs
+
+You always:
+1. Generate complete, compilable fuzz harnesses with proper includes and LLVMFuzzerTestOneInput signatures
+2. Include sanitizer flags in build scripts (-fsanitize=address,undefined)
+3. Provide seed corpus suggestions tailored to the target's input format
+4. Explain the fuzzing strategy: which code paths are targeted and why
+5. When triaging crashes, provide root cause, CWE, security impact, and a patch diff
+
+You are Hancock Fuzz. Every harness you write is ready for OSS-Fuzz submission."""
+
+SYSTEMS["fuzz"] = FUZZ_SYSTEM
+
 DEFAULT_MODE = "auto"
 # Keep backward-compatible alias
 HANCOCK_SYSTEM = AUTO_SYSTEM
@@ -240,7 +264,7 @@ BANNER = """
 ║          CyberViser — Pentest + SOC + CISO + Code        ║
 ║   Llama 3.1 · Qwen 2.5 Coder · Ollama (local)           ║
 ╚══════════════════════════════════════════════════════════╝
-  Modes : /mode pentest | soc | auto | code | ciso | sigma | yara
+  Modes : /mode pentest | soc | auto | code | ciso | sigma | yara | fuzz
   Models: /model llama3.1 | llama3.2 | mistral | qwen-coder | gemma3
   Other : /clear  /history  /exit
 """
@@ -364,10 +388,14 @@ def run_cli(client: OpenAI, model: str):
                     "auto":    "Auto (Pentest+SOC) ⚡",
                     "code":    "Code Assistant 💻 (Qwen 2.5 Coder 32B)",
                     "ciso":    "CISO Advisor 👔",
+                    "sigma":   "Sigma Detection Engineer 🔍",
+                    "yara":    "YARA Malware Analyst 🦠",
+                    "ioc":     "IOC Threat Intel 🔎",
+                    "fuzz":    "Fuzzing Specialist 🐛",
                 }
                 print(f"[Hancock] Switched to {label[current_mode]} — history cleared.")
             else:
-                print("[Hancock] Usage: /mode pentest | /mode soc | /mode auto | /mode code | /mode ciso | /mode sigma | /mode yara | /mode ioc")
+                print("[Hancock] Usage: /mode pentest | /mode soc | /mode auto | /mode code | /mode ciso | /mode sigma | /mode yara | /mode ioc | /mode fuzz")
             continue
 
         if user_input.startswith("/model "):
@@ -465,11 +493,13 @@ def build_app(client, model: str):
         return jsonify({
             "status": "ok", "agent": "Hancock",
             "model": model, "company": "CyberViser",
-            "modes": ["pentest", "soc", "auto", "code", "ciso", "sigma", "yara", "ioc"],
+            "modes": ["pentest", "soc", "auto", "code", "ciso", "sigma", "yara", "ioc", "fuzz"],
             "models_available": MODELS,
             "endpoints": ["/v1/chat", "/v1/ask", "/v1/triage",
                           "/v1/hunt", "/v1/respond", "/v1/code",
-                          "/v1/ciso", "/v1/sigma", "/v1/yara", "/v1/ioc", "/v1/webhook", "/metrics"],
+                          "/v1/ciso", "/v1/sigma", "/v1/yara", "/v1/ioc",
+                          "/v1/fuzz/generate-harness", "/v1/fuzz/triage",
+                          "/v1/webhook", "/metrics"],
         })
 
     @app.route("/metrics", methods=["GET"])
@@ -850,6 +880,75 @@ def build_app(client, model: str):
         return jsonify({"indicator": indicator, "type": ioc_type,
                         "report": report, "model": model})
 
+    # ── Fuzzing Specialist endpoints ──────────────────────────────────────────
+
+    @app.route("/v1/fuzz/generate-harness", methods=["POST"])
+    def fuzz_generate_harness():
+        """Generate an OSS-Fuzz-ready harness for a target repository/module."""
+        ok, err, _ = _check_auth_and_rate()
+        if not ok:
+            _inc("errors_total"); return jsonify({"error": err}), 401 if "Unauthorized" in err else 429
+        _inc("requests_total"); _inc("requests_by_endpoint", "/v1/fuzz/generate-harness"); _inc("requests_by_mode", "fuzz")
+        data     = request.get_json(force=True)
+        target   = (data.get("target") or data.get("repo") or "").strip()
+        language = data.get("language", "c++")
+        if not target:
+            _inc("errors_total"); return jsonify({"error": "target required"}), 400
+
+        from fuzzing_agent.specialists.fuzzing_specialist import (
+            build_harness_prompt,
+        )
+        prompt = build_harness_prompt(target, language)
+        messages = [
+            {"role": "system", "content": FUZZ_SYSTEM},
+            {"role": "user",   "content": prompt},
+        ]
+        resp = client.chat.completions.create(
+            model=model, messages=messages, max_tokens=2048,
+            temperature=0.2, top_p=0.7,
+        )
+        harness = resp.choices[0].message.content
+        if not harness:
+            _inc("errors_total"); return jsonify({"error": "model returned empty response"}), 502
+        return jsonify({
+            "harness":  harness,
+            "target":   target,
+            "language": language,
+            "model":    model,
+        })
+
+    @app.route("/v1/fuzz/triage", methods=["POST"])
+    def fuzz_triage():
+        """Triage a fuzz crash — LLM analysis of sanitizer output."""
+        ok, err, _ = _check_auth_and_rate()
+        if not ok:
+            _inc("errors_total"); return jsonify({"error": err}), 401 if "Unauthorized" in err else 429
+        _inc("requests_total"); _inc("requests_by_endpoint", "/v1/fuzz/triage"); _inc("requests_by_mode", "fuzz")
+        data        = request.get_json(force=True)
+        crash_log   = (data.get("crash_log") or data.get("log") or "").strip()
+        target_bin  = data.get("target", "unknown")
+        if not crash_log:
+            _inc("errors_total"); return jsonify({"error": "crash_log required"}), 400
+
+        from fuzzing_agent.specialists.fuzzing_specialist import build_triage_prompt
+        prompt = build_triage_prompt(crash_log, target_bin)
+        messages = [
+            {"role": "system", "content": FUZZ_SYSTEM},
+            {"role": "user",   "content": prompt},
+        ]
+        resp = client.chat.completions.create(
+            model=model, messages=messages, max_tokens=2048,
+            temperature=0.3, top_p=0.9,
+        )
+        triage = resp.choices[0].message.content
+        if not triage:
+            _inc("errors_total"); return jsonify({"error": "model returned empty response"}), 502
+        return jsonify({
+            "triage": triage,
+            "target": target_bin,
+            "model":  model,
+        })
+
     @app.route("/v1/webhook", methods=["POST"])
     def webhook_endpoint():
         """SIEM/EDR push webhook — auto-triage incoming alerts, optionally notify Slack/Teams."""
@@ -961,6 +1060,8 @@ def run_server(client, model: str, port: int):
     print(f"  POST http://localhost:{port}/v1/hunt     — threat hunting query generator")
     print(f"  POST http://localhost:{port}/v1/respond  — IR playbook (PICERL)")
     print(f"  POST http://localhost:{port}/v1/code     — security code gen (Qwen 2.5 Coder 32B)")
+    print(f"  POST http://localhost:{port}/v1/fuzz/generate-harness — generate fuzz harness")
+    print(f"  POST http://localhost:{port}/v1/fuzz/triage          — triage fuzz crash")
     print(f"  POST http://localhost:{port}/v1/webhook  — SIEM push webhook + Slack/Teams notify")
     print(f"  GET  http://localhost:{port}/health      — status check\n")
     app.run(host="0.0.0.0", port=port, debug=False)

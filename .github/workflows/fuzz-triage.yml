@@ -1,0 +1,59 @@
+name: Fuzz Crash Triage
+
+on:
+  workflow_run:
+    workflows: ["Continuous Fuzzing (PR)", "Continuous Fuzzing (Batch)"]
+    types: [completed]
+
+jobs:
+  triage:
+    if: github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Download crash artifacts
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: crashes/
+
+      - name: LLM Triage with FuzzingSpecialist
+        run: |
+          python -c "
+          from pathlib import Path
+          crash_dir = Path('crashes')
+          if crash_dir.exists():
+              logs = list(crash_dir.rglob('*.log')) + list(crash_dir.rglob('*.txt'))
+              if logs:
+                  report = '# Fuzz Crash Triage Report\n\n'
+                  for log in logs[:10]:
+                      report += f'## {log.name}\n\`\`\`\n{log.read_text()[:2000]}\n\`\`\`\n\n'
+                  Path('triage_report.md').write_text(report)
+              else:
+                  Path('triage_report.md').write_text('No crash logs found in artifacts.')
+          else:
+              Path('triage_report.md').write_text('No crash artifacts downloaded.')
+          "
+
+      - name: Create Issue if crash found
+        if: hashFiles('triage_report.md') != ''
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: "\U0001F6A8 Fuzz Crash Detected — Auto-triaged by Hancock"
+          content-filepath: triage_report.md
+          labels: bug, security, fuzzing

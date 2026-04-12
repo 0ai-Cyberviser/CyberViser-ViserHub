@@ -644,3 +644,92 @@ class TestIoc:
         assert r.status_code == 200
         d = r.get_json()
         assert d["type"] == "md5"
+
+
+# ── /v1/fuzz/generate-harness ────────────────────────────────────────────────
+
+class TestFuzzGenerateHarness:
+    def test_fuzz_generate_harness_returns_result(self, client):
+        r = client.post("/v1/fuzz/generate-harness",
+                        data=json.dumps({
+                            "target": "https://github.com/example/project",
+                            "language": "c++",
+                        }),
+                        content_type="application/json")
+        assert r.status_code == 200
+        d = r.get_json()
+        assert "harness" in d
+        assert d["target"] == "https://github.com/example/project"
+        assert d["language"] == "c++"
+
+    def test_fuzz_generate_harness_repo_alias(self, client):
+        """Accepts 'repo' field as alias for 'target'."""
+        r = client.post("/v1/fuzz/generate-harness",
+                        data=json.dumps({"repo": "my-project", "language": "python"}),
+                        content_type="application/json")
+        assert r.status_code == 200
+        d = r.get_json()
+        assert d["target"] == "my-project"
+
+    def test_fuzz_generate_harness_default_language(self, client):
+        r = client.post("/v1/fuzz/generate-harness",
+                        data=json.dumps({"target": "my-project"}),
+                        content_type="application/json")
+        assert r.status_code == 200
+        assert r.get_json()["language"] == "c++"
+
+    def test_fuzz_generate_harness_missing_target_returns_400(self, client):
+        r = client.post("/v1/fuzz/generate-harness",
+                        data=json.dumps({}),
+                        content_type="application/json")
+        assert r.status_code == 400
+        assert "error" in r.get_json()
+
+    def test_fuzz_generate_harness_empty_target_returns_400(self, client):
+        r = client.post("/v1/fuzz/generate-harness",
+                        data=json.dumps({"target": ""}),
+                        content_type="application/json")
+        assert r.status_code == 400
+
+
+# ── /v1/fuzz/triage ──────────────────────────────────────────────────────────
+
+class TestFuzzTriage:
+    def test_fuzz_triage_returns_result(self, client):
+        r = client.post("/v1/fuzz/triage",
+                        data=json.dumps({
+                            "crash_log": "==ERROR: AddressSanitizer: heap-buffer-overflow",
+                            "target": "my_parser",
+                        }),
+                        content_type="application/json")
+        assert r.status_code == 200
+        d = r.get_json()
+        assert "triage" in d
+        assert d["target"] == "my_parser"
+
+    def test_fuzz_triage_log_alias(self, client):
+        """Accepts 'log' field as alias for 'crash_log'."""
+        r = client.post("/v1/fuzz/triage",
+                        data=json.dumps({"log": "SUMMARY: some crash", "target": "bin"}),
+                        content_type="application/json")
+        assert r.status_code == 200
+
+    def test_fuzz_triage_default_target(self, client):
+        r = client.post("/v1/fuzz/triage",
+                        data=json.dumps({"crash_log": "some crash output"}),
+                        content_type="application/json")
+        assert r.status_code == 200
+        assert r.get_json()["target"] == "unknown"
+
+    def test_fuzz_triage_missing_crash_log_returns_400(self, client):
+        r = client.post("/v1/fuzz/triage",
+                        data=json.dumps({}),
+                        content_type="application/json")
+        assert r.status_code == 400
+        assert "error" in r.get_json()
+
+    def test_fuzz_triage_empty_crash_log_returns_400(self, client):
+        r = client.post("/v1/fuzz/triage",
+                        data=json.dumps({"crash_log": ""}),
+                        content_type="application/json")
+        assert r.status_code == 400
