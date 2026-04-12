@@ -910,11 +910,24 @@ def build_app(client, model: str):
         harness = resp.choices[0].message.content
         if not harness:
             _inc("errors_total"); return jsonify({"error": "model returned empty response"}), 502
+        try:
+            harness_payload = json.loads(harness)
+        except json.JSONDecodeError:
+            _inc("errors_total"); return jsonify({"error": "model returned invalid harness JSON"}), 502
+        if not isinstance(harness_payload, dict):
+            _inc("errors_total"); return jsonify({"error": "model returned invalid harness payload"}), 502
+        files = harness_payload.get("files")
+        if not isinstance(files, dict) or not all(
+            isinstance(path, str) and isinstance(content, str)
+            for path, content in files.items()
+        ):
+            _inc("errors_total"); return jsonify({"error": "model returned invalid files mapping"}), 502
         return jsonify({
-            "harness":  harness,
-            "target":   target,
-            "language": language,
-            "model":    model,
+            "files":       files,
+            "harness_raw": harness,
+            "target":      target,
+            "language":    language,
+            "model":       model,
         })
 
     @app.route("/v1/fuzz/triage", methods=["POST"])

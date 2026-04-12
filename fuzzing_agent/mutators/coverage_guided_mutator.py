@@ -82,8 +82,9 @@ def mutate_corpus(
 ) -> int:
     """Apply hybrid LLM mutation to every seed in *corpus_dir*.
 
-    If *llm_call* is ``None`` the function only analyses coverage and
-    returns the count of low-coverage paths (useful for dry-run / testing).
+    If *llm_call* is ``None`` the function still analyses coverage but
+    performs no mutations and returns ``0`` new seeds (useful for dry-run
+    / testing).
 
     Parameters
     ----------

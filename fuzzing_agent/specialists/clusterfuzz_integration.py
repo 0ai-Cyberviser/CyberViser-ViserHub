@@ -10,11 +10,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fuzzing_agent.specialists.fuzzing_specialist import (
-    build_harness_prompt,
-    write_project_files,
-)
-
 # Default ClusterFuzzLite configuration
 DEFAULT_CONFIG = {
     "language": "python",

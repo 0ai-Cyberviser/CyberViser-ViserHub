@@ -374,11 +374,11 @@ python hancock_agent.py
 
 ### Continuous Fuzzing CI/CD
 
-Every PR and nightly run auto-generates Atheris harnesses and runs ClusterFuzzLite. Crashes are triaged by the LLM and turned into GitHub Issues.
+Every PR and nightly run auto-generates Atheris harnesses and runs ClusterFuzzLite. Detected crashes are aggregated and turned into GitHub Issues by the CI workflow.
 
 - **PR fuzzing**: `.github/workflows/clusterfuzzlite-pr.yml` (10-min runs)
 - **Nightly batch**: `.github/workflows/clusterfuzzlite-batch.yml` (12-hour runs)
-- **Auto-triage**: `.github/workflows/fuzz-triage.yml` (crash → GitHub Issue)
+- **Crash issue creation**: `.github/workflows/fuzz-triage.yml` (crash logs → GitHub Issue)
 - **Coverage reports**: `.github/workflows/coverage-report.yml` (daily)
 
 Setup: `bash scripts/setup-fuzz-ci.sh`
