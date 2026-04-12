@@ -111,6 +111,7 @@ def generate_clusterfuzzlite_harnesses(
         stem = Path(path).stem
         harness = generate_harness_code(stem)
         dest = out / f"fuzz_{stem}.py"
-        dest.write_text(harness)
-        written.append(dest)
+        if not dest.exists():
+            dest.write_text(harness)
+            written.append(dest)
     return written
