@@ -10,15 +10,11 @@ Supported fuzzers: libFuzzer, AFL++, Atheris (Python), Honggfuzz.
 """
 from __future__ import annotations
 
-import json
-import shlex
 import subprocess
 from pathlib import Path
-from typing import Any
 
 from hancock_constants import (
     SUPPORTED_FUZZERS,
-    SUPPORTED_SANITIZERS,
     OSS_FUZZ_BASE_IMAGES,
 )
 
@@ -133,14 +129,13 @@ def build_docker_run_cmd(
         raise ValueError(
             f"Unsupported fuzzer '{fuzzer}'; choose from {SUPPORTED_FUZZERS}"
         )
-    safe_dir = shlex.quote(str(project_dir))
+    mount_dir = str(Path(project_dir).resolve())
     return [
         "docker", "run", "--rm",
-        "-v", f"{safe_dir}:/src",
+        "-v", f"{mount_dir}:/src",
+        "-e", f"HANCOCK_FUZZER={fuzzer}",
+        "-e", f"HANCOCK_FUZZ_DURATION={int(duration)}",
         image,
-        "python3", "-m", "fuzz_runner",
-        fuzzer,
-        "--time", str(int(duration)),
     ]
 
 

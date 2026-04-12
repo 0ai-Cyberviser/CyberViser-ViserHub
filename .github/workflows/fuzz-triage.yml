@@ -32,7 +32,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: crashes/
 
-      - name: LLM Triage with FuzzingSpecialist
+      - name: Aggregate crash logs into triage report
         run: |
           python -c "
           from pathlib import Path
@@ -51,7 +51,7 @@ jobs:
           "
 
       - name: Create Issue if crash found
-        if: hashFiles('triage_report.md') != ''
+        if: hashFiles('crashes/**/*.log', 'crashes/**/*.txt') != '' && hashFiles('triage_report.md') != ''
         uses: peter-evans/create-issue-from-file@v5
         with:
           title: "\U0001F6A8 Fuzz Crash Detected — Auto-triaged by Hancock"
