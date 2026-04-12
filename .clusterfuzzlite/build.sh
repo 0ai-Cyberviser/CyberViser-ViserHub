@@ -8,8 +8,16 @@
 pip3 install --progress-bar off -r "$SRC/hancock/requirements.txt"
 pip3 install --progress-bar off atheris pyyaml
 
-# Copy fuzz target scripts to $OUT
-cp "$SRC/hancock/fuzz_targets"/fuzz_*.py "$OUT/"
+# Copy only actual fuzz target scripts (exclude .gitkeep and non-.py files)
+shopt -s nullglob
+fuzz_scripts=("$SRC/hancock/fuzz_targets"/fuzz_*.py)
+
+if [[ ${#fuzz_scripts[@]} -eq 0 ]]; then
+    echo "ERROR: No fuzz_*.py targets found in $SRC/hancock/fuzz_targets/" >&2
+    exit 1
+fi
+
+cp "${fuzz_scripts[@]}" "$OUT/"
 
 # Create an executable shell wrapper for every fuzz_*.py target.
 # ClusterFuzzLite (OSS-Fuzz convention) requires executable binaries in $OUT;

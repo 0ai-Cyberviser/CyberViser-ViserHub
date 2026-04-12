@@ -7,6 +7,8 @@ Generates OSS-Fuzz-ready project structures (harnesses, Dockerfiles, build scrip
 orchestrates local fuzz runs via Docker, and triages crashes with LLM analysis.
 
 Supported fuzzers: libFuzzer, AFL++, Atheris (Python), Honggfuzz.
+
+ClusterFuzzLite fuzz harness: fuzz_targets/fuzz_hancock_agent.py
 """
 from __future__ import annotations
 
