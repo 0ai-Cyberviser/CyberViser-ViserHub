@@ -8,6 +8,12 @@
 pip3 install --progress-bar off -r "$SRC/hancock/requirements.txt"
 pip3 install --progress-bar off atheris pyyaml
 
+# Make the local fuzzing_agent package (and any other top-level packages)
+# importable by fuzz harnesses.  The pyproject.toml only discovers packages
+# under clients/python, so pip install -e won't expose fuzzing_agent; adding
+# $SRC/hancock to PYTHONPATH is the correct fix.
+export PYTHONPATH="$SRC/hancock:${PYTHONPATH:-}"
+
 # Copy only actual fuzz target scripts (exclude .gitkeep and non-.py files)
 shopt -s nullglob
 fuzz_scripts=("$SRC/hancock/fuzz_targets"/fuzz_*.py)
