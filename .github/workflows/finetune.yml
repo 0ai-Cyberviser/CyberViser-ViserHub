@@ -1,5 +1,8 @@
 name: Fine-Tune Hancock (Modal GPU)
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:

@@ -7,6 +7,9 @@ on:
       - "docs/**"
       - "netlify.toml"
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     name: Netlify Deploy
