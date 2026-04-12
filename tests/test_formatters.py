@@ -316,3 +316,245 @@ class TestFormatterV2:
         }
         result = format_kb_pairs(kb_data)
         assert result[0]["messages"][0]["content"] == "Original system prompt."
+
+    def test_format_kb_pairs_v2_soc_category(self):
+        from formatter.to_mistral_jsonl_v2 import format_kb_pairs, SOC_SYSTEM
+        kb_data = {
+            "pairs": [
+                {
+                    "user": "How do I triage alerts?",
+                    "assistant": "Triage alerts by checking severity, correlate with other events, and map to MITRE ATT&CK." * 2,
+                    "category": "alert_triage",
+                },
+            ]
+        }
+        result = format_kb_pairs(kb_data)
+        assert result[0]["messages"][0]["content"] == SOC_SYSTEM
+
+    def test_format_mitre_v2(self):
+        from formatter.to_mistral_jsonl_v2 import format_mitre_techniques
+        mitre_data = {
+            "techniques": [{
+                "name": "Pass the Hash",
+                "description": "Adversaries may use stolen password hashes to authenticate without needing the actual password. " * 3,
+                "mitre_id": "T1550.002",
+                "kill_chain_phases": ["lateral-movement"],
+                "platforms": ["Windows"],
+                "detection": "Monitor for unusual NTLM authentication events.",
+            }]
+        }
+        result = format_mitre_techniques(mitre_data)
+        assert len(result) == 1
+        assert "T1550.002" in result[0]["messages"][1]["content"]
+
+    def test_format_cves_v2_critical(self):
+        from formatter.to_mistral_jsonl_v2 import format_cves
+        cve_list = [{
+            "cve_id": "CVE-2024-1111",
+            "description": "A critical RCE in the parser component allowing remote execution via specially crafted input." * 2,
+            "cvss_score": 9.5,
+            "severity": "CRITICAL",
+            "attack_vector": "NETWORK",
+            "cwes": ["CWE-502"],
+        }]
+        result = format_cves(cve_list)
+        assert len(result) == 1
+        assert "CVE-2024-1111" in result[0]["messages"][2]["content"]
+
+    def test_format_soc_detections(self):
+        from formatter.to_mistral_jsonl_v2 import format_soc_detections
+        detections = [
+            {
+                "user": "How do I detect lateral movement via PsExec in Splunk?",
+                "assistant": "Use the following SPL query to detect PsExec usage: index=windows EventCode=7045 ServiceName=PSEXESVC | table _time host ServiceName" * 2,
+            },
+            {
+                "user": "short",
+                "assistant": "too short",  # Should be filtered
+            },
+        ]
+        result = format_soc_detections(detections)
+        assert len(result) == 1
+
+    def test_validate_sample_v2(self):
+        from formatter.to_mistral_jsonl_v2 import validate_sample
+        valid = {
+            "messages": [
+                {"role": "system", "content": "System prompt"},
+                {"role": "user", "content": "Long enough user question about security"},
+                {"role": "assistant", "content": "A sufficiently long assistant response that meets the fifty character minimum requirement for validation." * 2},
+            ]
+        }
+        assert validate_sample(valid) is True
+        assert validate_sample({"messages": []}) is False
+
+    def test_system_for_helper(self):
+        from formatter.to_mistral_jsonl_v2 import _system_for, SOC_SYSTEM, PENTEST_SYSTEM
+        assert _system_for("alert_triage") == SOC_SYSTEM
+        assert _system_for("siem_queries") == SOC_SYSTEM
+        assert _system_for("unknown_category") == PENTEST_SYSTEM
+
+
+# ── Formatter v3 — collectors/formatter_v3.py ────────────────────────────────
+
+class TestFormatterV3:
+    """Tests for collectors.formatter_v3 functions."""
+
+    def test_load_json_existing(self, tmp_path):
+        from collectors.formatter_v3 import load_json
+        f = tmp_path / "test.json"
+        f.write_text('[{"id": 1}]')
+        result = load_json(f)
+        assert result == [{"id": 1}]
+
+    def test_load_json_missing(self, tmp_path):
+        from collectors.formatter_v3 import load_json
+        result = load_json(tmp_path / "nonexistent.json")
+        assert result == []
+
+    def test_load_jsonl_existing(self, tmp_path):
+        from collectors.formatter_v3 import load_jsonl
+        f = tmp_path / "test.jsonl"
+        f.write_text('{"a": 1}\n{"b": 2}\n')
+        result = load_jsonl(f)
+        assert len(result) == 2
+
+    def test_load_jsonl_missing(self, tmp_path):
+        from collectors.formatter_v3 import load_jsonl
+        result = load_jsonl(tmp_path / "nonexistent.jsonl")
+        assert result == []
+
+    def test_format_nvd_cves(self):
+        from collectors.formatter_v3 import format_nvd_cves
+        cves = [{
+            "cve_id": "CVE-2024-9999",
+            "description": "A critical buffer overflow vulnerability in the network protocol handler of ExampleServer allowing remote code execution." * 2,
+            "cvss_score": 9.8,
+            "attack_vector": "NETWORK",
+            "cwes": ["CWE-120"],
+        }]
+        result = format_nvd_cves(cves)
+        # Should produce 2 samples per CVE (explain + triage)
+        assert len(result) == 2
+        assert "CVE-2024-9999" in result[0]["messages"][1]["content"]
+        assert "triage" in result[1]["messages"][1]["content"].lower()
+
+    def test_format_nvd_cves_filters_short(self):
+        from collectors.formatter_v3 import format_nvd_cves
+        cves = [{"cve_id": "CVE-2024-0001", "description": "Short", "cvss_score": 5.0}]
+        result = format_nvd_cves(cves)
+        assert len(result) == 0
+
+    def test_format_kev_entries(self):
+        from collectors.formatter_v3 import format_kev_entries
+        kevs = [{
+            "cve_id": "CVE-2024-5555",
+            "name": "Test KEV Vulnerability",
+            "description": "Actively exploited vulnerability in test product.",
+            "vendor": "TestVendor",
+            "product": "TestProduct",
+            "action_required": "Apply update per vendor",
+            "known_ransomware": "Known",
+            "cvss_score": 9.5,
+        }]
+        result = format_kev_entries(kevs)
+        assert len(result) == 1
+        assert "ransomware" in result[0]["messages"][2]["content"].lower()
+        assert "KEV" in result[0]["messages"][2]["content"]
+
+    def test_format_kev_entries_no_ransomware(self):
+        from collectors.formatter_v3 import format_kev_entries
+        kevs = [{
+            "cve_id": "CVE-2024-6666",
+            "name": "Another KEV",
+            "description": "Description here.",
+            "vendor": "V", "product": "P",
+            "action_required": "Patch",
+            "known_ransomware": "Unknown",
+            "cvss_score": 7.0,
+        }]
+        result = format_kev_entries(kevs)
+        assert len(result) == 1
+        assert "⚠️" not in result[0]["messages"][2]["content"]
+
+    def test_format_kev_filters_empty(self):
+        from collectors.formatter_v3 import format_kev_entries
+        assert format_kev_entries([{"cve_id": "", "description": ""}]) == []
+
+    def test_format_ghsa_advisories(self):
+        from collectors.formatter_v3 import format_ghsa_advisories
+        advisories = [{
+            "ghsa_id": "GHSA-test-1234-abcd",
+            "cve_id": "CVE-2024-7777",
+            "summary": "Critical RCE in example-lib",
+            "description": "A remote code execution vulnerability exists in the deserialization of untrusted input." * 3,
+            "ecosystem": "npm",
+            "packages": ["example-lib (npm)"],
+            "severity": "critical",
+            "cvss_score": 9.8,
+        }]
+        result = format_ghsa_advisories(advisories)
+        assert len(result) == 1
+        assert "CVE-2024-7777" in result[0]["messages"][1]["content"]
+
+    def test_format_ghsa_filters_short(self):
+        from collectors.formatter_v3 import format_ghsa_advisories
+        advisories = [{"summary": "Short", "description": "Also short", "ghsa_id": "GHSA-x"}]
+        assert format_ghsa_advisories(advisories) == []
+
+    def test_format_atomic_tests(self):
+        from collectors.formatter_v3 import format_atomic_tests
+        tests = [{
+            "technique_id": "T1059.001",
+            "technique_name": "PowerShell",
+            "test_name": "Encoded Command",
+            "description": "Runs a base64-encoded PowerShell command to evade detection.",
+            "commands": "powershell -enc dGVzdA==",
+            "platforms": "windows",
+        }]
+        result = format_atomic_tests(tests)
+        # Should produce 2 per test (pentest + SOC detection)
+        assert len(result) == 2
+        assert "T1059.001" in result[0]["messages"][1]["content"]
+        assert "detect" in result[1]["messages"][1]["content"].lower()
+
+    def test_format_atomic_filters_empty(self):
+        from collectors.formatter_v3 import format_atomic_tests
+        assert format_atomic_tests([{"technique_id": "", "description": ""}]) == []
+
+    def test_format_existing_v2(self):
+        from collectors.formatter_v3 import format_existing_v2
+        samples = [
+            {"messages": [{"role": "system", "content": "sys"}, {"role": "user", "content": "q"}]},
+            {"messages": []},  # should be filtered
+            {"other": "no messages key"},  # should be filtered
+        ]
+        result = format_existing_v2(samples)
+        assert len(result) == 1
+
+    def test_format_all_v3(self, tmp_path):
+        from collectors import formatter_v3
+
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+
+        # Write sample data files
+        (data_dir / "raw_cve.json").write_text(json.dumps([{
+            "cve_id": "CVE-2024-0001",
+            "description": "A critical vulnerability in ExampleServer allowing remote code execution via crafted network packets." * 2,
+            "cvss_score": 9.8,
+            "attack_vector": "NETWORK",
+            "cwes": ["CWE-78"],
+        }]))
+        (data_dir / "raw_kev.json").write_text(json.dumps([]))
+        (data_dir / "raw_ghsa.json").write_text(json.dumps([]))
+        (data_dir / "raw_atomic.json").write_text(json.dumps([]))
+        (data_dir / "hancock_v2.jsonl").write_text("")
+
+        output_file = data_dir / "hancock_v3.jsonl"
+        with patch.object(formatter_v3, "DATA_DIR", data_dir), \
+             patch.object(formatter_v3, "OUTPUT_FILE", output_file):
+            result = formatter_v3.format_all()
+
+        assert len(result) >= 2  # 2 samples per CVE
+        assert output_file.exists()
