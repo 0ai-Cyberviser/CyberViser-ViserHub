@@ -558,3 +558,150 @@ class TestFormatterV3:
 
         assert len(result) >= 2  # 2 samples per CVE
         assert output_file.exists()
+
+
+class TestFormatterV2FormatAll:
+    """Tests for formatter.to_mistral_jsonl_v2.format_all with mocked data files."""
+
+    def test_format_all_v2_with_all_sources(self, tmp_path):
+        from formatter import to_mistral_jsonl_v2
+
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+
+        # Pentest KB
+        (data_dir / "raw_pentest_kb.json").write_text(json.dumps({
+            "system_prompt": "You are Hancock.",
+            "pairs": [{
+                "user": "What is SQL injection and how is it exploited?",
+                "assistant": "SQL injection is a code injection technique that exploits input validation vulnerabilities in web applications." * 3,
+            }]
+        }))
+        # SOC KB
+        (data_dir / "raw_soc_kb.json").write_text(json.dumps({
+            "pairs": [{
+                "user": "How do I analyze suspicious PowerShell activity?",
+                "assistant": "Analyze PowerShell activity by checking Event ID 4104 for script block logging and correlating with process creation events." * 3,
+                "category": "log_analysis",
+            }]
+        }))
+        # MITRE
+        (data_dir / "raw_mitre.json").write_text(json.dumps({
+            "techniques": [{
+                "name": "PowerShell Execution",
+                "description": "Adversaries may abuse PowerShell commands and scripts for execution on Windows systems." * 5,
+                "mitre_id": "T1059.001",
+                "kill_chain_phases": ["execution"],
+                "platforms": ["Windows"],
+                "detection": "Monitor for PowerShell activity",
+            }]
+        }))
+        # SOC Detections
+        (data_dir / "raw_soc_detections.json").write_text(json.dumps([{
+            "user": "How do I detect lateral movement via PsExec in my environment?",
+            "assistant": "Detect PsExec by monitoring for Event ID 7045 (new service installed) with service name PSEXESVC. Also check for SMB activity." * 3,
+        }]))
+        # CVEs
+        (data_dir / "raw_cve.json").write_text(json.dumps([{
+            "cve_id": "CVE-2024-1234",
+            "description": "A remote code execution vulnerability in Example Server v1.2.3 via crafted HTTP requests affecting the admin panel." * 2,
+            "cvss_score": 9.8,
+            "severity": "CRITICAL",
+            "attack_vector": "NETWORK",
+            "cwes": ["CWE-78"],
+        }]))
+
+        output_file = data_dir / "hancock_v2.jsonl"
+        with patch.object(to_mistral_jsonl_v2, "DATA_DIR", data_dir), \
+             patch.object(to_mistral_jsonl_v2, "OUTPUT_FILE", output_file):
+            result = to_mistral_jsonl_v2.format_all()
+
+        assert len(result) >= 4  # At least one from each source
+        assert output_file.exists()
+
+    def test_format_all_v2_no_data(self, tmp_path):
+        from formatter import to_mistral_jsonl_v2
+
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        output_file = data_dir / "hancock_v2.jsonl"
+
+        with patch.object(to_mistral_jsonl_v2, "DATA_DIR", data_dir), \
+             patch.object(to_mistral_jsonl_v2, "OUTPUT_FILE", output_file):
+            result = to_mistral_jsonl_v2.format_all()
+
+        assert result == []
+
+
+class TestNvdCollectorCollect:
+    """Tests for collectors.nvd_collector.collect with mocked HTTP."""
+
+    @patch("collectors.nvd_collector.time.sleep")
+    @patch("collectors.nvd_collector.fetch_page")
+    def test_collect_saves_output(self, mock_fetch, mock_sleep, tmp_path):
+        from collectors import nvd_collector
+
+        mock_fetch.return_value = {
+            "totalResults": 1,
+            "vulnerabilities": [{
+                "cve": {
+                    "id": "CVE-2024-1234",
+                    "descriptions": [{"lang": "en", "value": "A critical vulnerability in Example Server allowing remote code execution via specially crafted HTTP requests."}],
+                    "metrics": {"cvssMetricV31": [{"cvssData": {"baseScore": 9.8, "attackVector": "NETWORK", "baseSeverity": "CRITICAL"}}]},
+                    "weaknesses": [],
+                    "references": [],
+                }
+            }]
+        }
+
+        output = tmp_path / "raw_cve.json"
+        with patch.object(nvd_collector, "OUTPUT_FILE", output):
+            result = nvd_collector.collect()
+
+        assert len(result) >= 1
+        assert output.exists()
+
+    @patch("collectors.nvd_collector.time.sleep")
+    @patch("collectors.nvd_collector.fetch_page")
+    def test_collect_handles_empty_pages(self, mock_fetch, mock_sleep, tmp_path):
+        from collectors import nvd_collector
+        mock_fetch.return_value = {"totalResults": 0, "vulnerabilities": []}
+
+        output = tmp_path / "raw_cve.json"
+        with patch.object(nvd_collector, "OUTPUT_FILE", output):
+            result = nvd_collector.collect()
+
+        assert result == []
+
+
+class TestGhsaCollectorCollect:
+    """Tests for collectors.ghsa_collector.collect with mocked HTTP."""
+
+    @patch("collectors.ghsa_collector.time.sleep")
+    @patch("collectors.ghsa_collector.fetch_advisories")
+    def test_collect_deduplicates(self, mock_fetch, mock_sleep, tmp_path):
+        from collectors import ghsa_collector
+
+        # Return same advisory twice for different severity levels
+        advisory = {
+            "ghsa_id": "GHSA-test-1234",
+            "summary": "Test advisory",
+            "description": "A critical security issue in example package allowing remote code execution." * 3,
+            "severity": "critical",
+            "cvss": {"score": 9.0},
+            "cwes": [],
+            "vulnerabilities": [{"package": {"name": "test", "ecosystem": "npm"}}],
+            "identifiers": [],
+            "published_at": "2024-01-01",
+            "references": [],
+        }
+        mock_fetch.return_value = [advisory]
+
+        output = tmp_path / "raw_ghsa.json"
+        with patch.object(ghsa_collector, "OUTPUT_FILE", output):
+            result = ghsa_collector.collect(max_per_eco=1)
+
+        # Should deduplicate — only one unique GHSA ID
+        ghsa_ids = [a["ghsa_id"] for a in result]
+        assert len(set(ghsa_ids)) == len(ghsa_ids)
+        assert output.exists()
