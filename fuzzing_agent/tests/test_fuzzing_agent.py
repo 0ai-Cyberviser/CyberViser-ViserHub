@@ -57,8 +57,9 @@ class TestFuzzingSpecialist:
         from fuzzing_agent.specialists.fuzzing_specialist import build_docker_run_cmd
         cmd = build_docker_run_cmd("/tmp/proj", "aflpp", 600)
         assert "docker" in cmd
-        assert any("aflpp" in part for part in cmd)
-        assert any("600" in part for part in cmd)
+        assert "-e" in cmd
+        assert any("HANCOCK_FUZZER=aflpp" in part for part in cmd)
+        assert any("HANCOCK_FUZZ_DURATION=600" in part for part in cmd)
 
     def test_build_docker_run_cmd_invalid_fuzzer(self):
         from fuzzing_agent.specialists.fuzzing_specialist import build_docker_run_cmd
