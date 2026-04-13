@@ -30,7 +30,8 @@ cp "${fuzz_scripts[@]}" "$OUT/"
 # for Python/Atheris targets the wrapper is the binary that it invokes.
 for fuzzer in "$OUT"/fuzz_*.py; do
     base=$(basename "$fuzzer" .py)
-    printf '#!/bin/bash\npython3 %s "$@"\n' "$fuzzer" > "$OUT/$base"
+    printf '#!/bin/bash\nexport PYTHONPATH="%s:${PYTHONPATH:-}"\npython3 %s "$@"\n' \
+        "$SRC/hancock" "$fuzzer" > "$OUT/$base"
     chmod +x "$OUT/$base"
 done
 
