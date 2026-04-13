@@ -6,5 +6,4 @@ sanitizers:
   - address
   - undefined
   - coverage
-auto_build: true
 coverage: true
