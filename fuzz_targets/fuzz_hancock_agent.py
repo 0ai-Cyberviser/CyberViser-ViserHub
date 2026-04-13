@@ -42,22 +42,20 @@ def TestOneInput(data: bytes) -> None:
     duration = fdp.ConsumeInt(4)
     filename = fdp.ConsumeUnicodeNoSurrogates(64)
     content = fdp.ConsumeUnicodeNoSurrogates(256)
-    try:
-        build_harness_prompt(target, language)
-        build_triage_prompt(crash_log, target)
-    except Exception:
-        pass  # expected errors are acceptable; crashes are not
+
+    build_harness_prompt(target, language)
+    build_triage_prompt(crash_log, target)
 
     try:
         build_docker_run_cmd(target, fuzzer, duration)
-    except Exception:
+    except ValueError:
         pass  # invalid fuzzer name raises ValueError — that is expected
 
     if filename:
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
                 write_project_files(Path(tmpdir), {filename: content})
-        except Exception:
+        except (ValueError, OSError):
             pass  # path traversal or other OS errors are acceptable
 
 
