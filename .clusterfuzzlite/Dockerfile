@@ -9,4 +9,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY . $SRC/hancock
 COPY .clusterfuzzlite/build.sh $SRC/build.sh
+RUN chmod +x $SRC/build.sh
 WORKDIR $SRC/hancock
