@@ -51,10 +51,11 @@ def TestOneInput(data: bytes) -> None:
     except ValueError:
         pass  # invalid fuzzer name raises ValueError — that is expected
 
-    if filename:
+    safe_filename = Path(filename).name
+    if filename and safe_filename and safe_filename == filename:
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
-                write_project_files(Path(tmpdir), {filename: content})
+                write_project_files(Path(tmpdir), {safe_filename: content})
         except (ValueError, OSError):
             pass  # path traversal or other OS errors are acceptable
 
