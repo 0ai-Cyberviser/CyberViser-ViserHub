@@ -9,6 +9,7 @@ jobs:
   fuzz-batch:
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       contents: read
     steps:
       - uses: actions/checkout@v4
@@ -16,12 +17,14 @@ jobs:
       - name: Build fuzz targets
         uses: google/clusterfuzzlite/actions/build_fuzzers@v1
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           language: python
 
       - name: ClusterFuzzLite Batch Run
         uses: google/clusterfuzzlite/actions/run_fuzzers@v1
         with:
           fuzz-seconds: 43200  # 12-hour nightly batch fuzz run
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           language: python
           mode: batch
 
