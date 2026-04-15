@@ -26,12 +26,14 @@ fi
 cp "${fuzz_scripts[@]}" "$OUT/"
 
 # Create an executable shell wrapper for every fuzz_*.py target.
-# ClusterFuzzLite (OSS-Fuzz convention) requires executable binaries in $OUT;
-# for Python/Atheris targets the wrapper is the binary that it invokes.
+# ClusterFuzzLite only treats shell wrappers as fuzz targets when their
+# executable name ends with "_fuzzer"; otherwise it looks for an
+# LLVMFuzzerTestOneInput symbol and ignores the file.
 for fuzzer in "$OUT"/fuzz_*.py; do
     base=$(basename "$fuzzer" .py)
-    printf '#!/bin/bash\nexport PYTHONPATH="%s:${PYTHONPATH:-}"\npython3 "%s" "$@"\n' "$SRC/hancock" "$fuzzer" > "$OUT/$base"
-    chmod +x "$OUT/$base"
+    wrapper="$OUT/${base}_fuzzer"
+    printf '#!/bin/bash\nexport PYTHONPATH="%s:${PYTHONPATH:-}"\npython3 "%s" "$@"\n' "$SRC/hancock" "$fuzzer" > "$wrapper"
+    chmod +x "$wrapper"
 done
 
 echo "Fuzz targets written to ${OUT}:"

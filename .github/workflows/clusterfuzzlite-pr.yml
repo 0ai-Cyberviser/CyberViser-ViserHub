@@ -3,6 +3,8 @@ name: Continuous Fuzzing (PR)
 on:
   pull_request:
     paths:
+      - '.clusterfuzzlite/**'
+      - '.github/workflows/clusterfuzzlite-*.yml'
       - 'hancock_agent.py'
       - 'fuzzing_agent/**'
       - 'fuzz_targets/**'
