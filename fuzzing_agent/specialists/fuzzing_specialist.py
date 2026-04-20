@@ -23,7 +23,7 @@ from hancock_constants import (
 )
 
 
-def build_harness_prompt(target_repo: str, language: str = "c++") -> str:
+def build_harness_prompt(target_repo: str, language: str = "c++", context: str = "") -> str:
     """Return the LLM prompt for generating an OSS-Fuzz project structure.
 
     Parameters
@@ -32,6 +32,8 @@ def build_harness_prompt(target_repo: str, language: str = "c++") -> str:
         URL or local path of the target repository.
     language:
         Programming language of the target (``c++``, ``python``, etc.).
+    context:
+        Additional context about the target (e.g., "focus on JSON parser", "test HTTP endpoints").
 
     Returns
     -------
@@ -39,19 +41,22 @@ def build_harness_prompt(target_repo: str, language: str = "c++") -> str:
         A prompt string suitable for Hancock's ``llm_call`` / ``chat()``.
     """
     base_image = OSS_FUZZ_BASE_IMAGES.get(language, OSS_FUZZ_BASE_IMAGES["c++"])
+    context_line = f"\n\nAdditional context: {context}" if context else ""
+
     return (
         f"You are an OSS-Fuzz expert. Given target repo {target_repo} in {language}, "
         f"generate a complete OSS-Fuzz project folder with:\n"
-        f"1. project.yaml\n"
-        f"2. Dockerfile (use {base_image})\n"
-        f"3. build.sh\n"
-        f"4. A fuzz harness file appropriate for {language}\n"
-        f"5. corpus/ seed files\n\n"
-        f"Return as JSON with keys 'files' (mapping filename to content string)."
+        f"1. project.yaml (include homepage, primary_contact, auto_ccs, and main_repo)\n"
+        f"2. Dockerfile (use {base_image} as base image)\n"
+        f"3. build.sh (compile with sanitizers: -fsanitize=address,undefined)\n"
+        f"4. A fuzz harness file appropriate for {language} (focus on high-value targets)\n"
+        f"5. corpus/ seed files (at least 3 diverse examples){context_line}\n\n"
+        f"Return as JSON with keys 'files' (mapping filename to content string).\n"
+        f"Ensure the harness covers key input parsing/processing functions."
     )
 
 
-def build_triage_prompt(crash_log: str, target_binary: str) -> str:
+def build_triage_prompt(crash_log: str, target_binary: str, source_code: str = "") -> str:
     """Return the LLM prompt for triaging a sanitizer crash.
 
     Parameters
@@ -60,20 +65,30 @@ def build_triage_prompt(crash_log: str, target_binary: str) -> str:
         Raw text from the AddressSanitizer / UBSan / crash output.
     target_binary:
         Name or path of the target that crashed.
+    source_code:
+        Optional source code snippet around the crash location for better analysis.
 
     Returns
     -------
     str
         A triage prompt.
     """
+    source_section = ""
+    if source_code:
+        source_section = f"\n\nRelevant source code:\n```\n{source_code}\n```\n"
+
     return (
         f"Analyze this sanitizer crash from {target_binary}:\n"
-        f"```\n{crash_log}\n```\n\n"
+        f"```\n{crash_log}\n```{source_section}\n"
         f"Provide:\n"
-        f"1. Root cause analysis\n"
-        f"2. CWE classification\n"
-        f"3. Security impact assessment (CVSS-style)\n"
-        f"4. A minimal patch diff that fixes the issue"
+        f"1. Root cause analysis (what went wrong and why)\n"
+        f"2. CWE classification (e.g., CWE-119, CWE-416) with explanation\n"
+        f"3. Security impact assessment:\n"
+        f"   - Exploitability (Low/Medium/High)\n"
+        f"   - CVSS v3.1 base score estimate\n"
+        f"   - Attack vector and prerequisites\n"
+        f"4. A minimal patch diff that fixes the issue\n"
+        f"5. Suggested test case to prevent regression"
     )
 
 
