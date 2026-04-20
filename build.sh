@@ -1,8 +1,12 @@
 #!/bin/bash
 # ClusterFuzzLite build script for CyberViser Hancock (Python / Atheris)
 # $OUT is set by ClusterFuzzLite to its output directory
+# $SRC is set by ClusterFuzzLite to the source directory
 
 set -e
+
+# Ensure we're in the correct directory
+cd "$SRC"
 
 # Install project and fuzzing dependencies
 pip install --progress-bar off -r requirements.txt
