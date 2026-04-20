@@ -8,13 +8,18 @@
 pip3 install --progress-bar off -r "$SRC/hancock/requirements.txt"
 pip3 install --progress-bar off atheris pyyaml
 
-# Make the local fuzzing_agent package (and any other top-level packages)
-# importable by fuzz harnesses.  The pyproject.toml only discovers packages
-# under clients/python, so pip install -e won't expose fuzzing_agent; adding
-# $SRC/hancock to PYTHONPATH is the correct fix.
-export PYTHONPATH="$SRC/hancock:${PYTHONPATH:-}"
+# Copy source packages that fuzz targets import into $OUT so they are
+# importable at fuzz time via PYTHONPATH=$this_dir (set by the wrapper
+# that compile_python_fuzzer creates).  The pyproject.toml only discovers
+# packages under clients/python, so pip install -e won't expose these.
+cp -r "$SRC/hancock/fuzzing_agent" "$OUT/"
+cp    "$SRC/hancock/hancock_constants.py" "$OUT/"
 
-# Copy only actual fuzz target scripts (exclude .gitkeep and non-.py files)
+# Compile each fuzz target using the OSS-Fuzz helper.
+# compile_python_fuzzer (provided by gcr.io/oss-fuzz-base/base-builder-python)
+# copies the .py file to $OUT and creates an executable wrapper that sets
+# LD_PRELOAD for the Atheris/libFuzzer sanitizer runtime and uses relative
+# paths so targets work in both the build and run containers.
 shopt -s nullglob
 fuzz_scripts=("$SRC/hancock/fuzz_targets"/fuzz_*.py)
 
@@ -23,17 +28,8 @@ if [[ ${#fuzz_scripts[@]} -eq 0 ]]; then
     exit 1
 fi
 
-cp "${fuzz_scripts[@]}" "$OUT/"
-
-# Create an executable shell wrapper for every fuzz_*.py target.
-# ClusterFuzzLite only treats shell wrappers as fuzz targets when their
-# executable name ends with "_fuzzer"; otherwise it looks for an
-# LLVMFuzzerTestOneInput symbol and ignores the file.
-for fuzzer in "$OUT"/fuzz_*.py; do
-    base=$(basename "$fuzzer" .py)
-    wrapper="$OUT/${base}_fuzzer"
-    printf '#!/bin/bash\nexport PYTHONPATH="%s:${PYTHONPATH:-}"\npython3 "%s" "$@"\n' "$SRC/hancock" "$fuzzer" > "$wrapper"
-    chmod +x "$wrapper"
+for fuzzer in "${fuzz_scripts[@]}"; do
+    compile_python_fuzzer "$fuzzer"
 done
 
 echo "Fuzz targets written to ${OUT}:"
