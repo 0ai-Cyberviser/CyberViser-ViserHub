@@ -3,6 +3,8 @@ name: Continuous Fuzzing (PR)
 on:
   pull_request:
     paths:
+      - '.clusterfuzzlite/**'
+      - '.github/workflows/clusterfuzzlite-*.yml'
       - 'hancock_agent.py'
       - 'fuzzing_agent/**'
       - 'fuzz_targets/**'
@@ -11,6 +13,7 @@ jobs:
   fuzz-pr:
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       contents: read
     steps:
       - uses: actions/checkout@v4
@@ -18,12 +21,15 @@ jobs:
       - name: Build fuzz targets
         uses: google/clusterfuzzlite/actions/build_fuzzers@v1
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          keep-unaffected-fuzz-targets: true
           language: python
 
       - name: Run ClusterFuzzLite (PR mode)
         uses: google/clusterfuzzlite/actions/run_fuzzers@v1
         with:
           fuzz-seconds: 600
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           language: python
 
       - name: Upload crash artifacts
