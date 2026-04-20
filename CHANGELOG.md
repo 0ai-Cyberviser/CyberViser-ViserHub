@@ -7,6 +7,20 @@ Versioning: [Semantic Versioning](https://semver.org/)
 
 ---
 
+## [Unreleased]
+
+### Added
+- **Intelligent fuzzing harness generation**: `generate_harness_code()` now automatically detects and calls common module entry points (process, parse, main) via hasattr pattern matching
+- **Enhanced crash triage**: `build_triage_prompt()` accepts optional `source_code` parameter for improved root cause analysis with CVSS v3.1 scoring
+- **Context-aware harness prompts**: `build_harness_prompt()` supports `context` parameter for targeted fuzzing (e.g., "focus on JSON parser")
+- **Flexible import control**: New `include_imports` parameter in harness generation for safer stub creation
+
+### Fixed
+- **TODO resolved**: Removed placeholder comment in `clusterfuzz_integration.py:82` — harnesses now include functional target module calls
+- **Crash triage depth**: Enhanced triage output with exploitability assessment, attack vector analysis, and regression test suggestions
+
+---
+
 ## [0.5.0] — Ollama Primary Backend
 
 ### Changed
