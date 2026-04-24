@@ -4,10 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CyberViser AI | 0AI Security Engineering Hub</title>
-  <meta name="description" content="CyberViser AI unifies Hancock, 0AI, fuzzing, vulnerability intelligence, SOC, IR, OSINT, and security engineering repositories into one public-safe mission-control hub." />
+  <meta name="description" content="CyberViser AI unifies Hancock, 0AI, fuzzing, vulnerability intelligence, SOC, IR, OSINT, honeypot telemetry, and security engineering repositories into one public-safe mission-control hub." />
   <meta name="theme-color" content="#00ff88" />
   <meta property="og:title" content="CyberViser AI" />
-  <meta property="og:description" content="Hancock, 0AI, fuzzing, SOC, IR, OSINT, CVE intelligence, and security engineering repositories in one public-safe hub." />
+  <meta property="og:description" content="Hancock, 0AI, fuzzing, SOC, IR, OSINT, honeypot telemetry, CVE intelligence, and security engineering repositories in one public-safe hub." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://cyberviserai.com/" />
   <link rel="canonical" href="https://cyberviserai.com/" />
@@ -22,6 +22,7 @@
     <nav class="nav" aria-label="Primary navigation">
       <a href="#platform">Platform</a>
       <a href="#stack">Stack</a>
+      <a href="#honeypot">Honeypot</a>
       <a href="#hancock">Hancock</a>
       <a href="#repos">Repos</a>
       <a href="#privacy">Privacy</a>
@@ -34,14 +35,14 @@
       <div class="hero-copy">
         <p class="eyebrow">CyberViser / 0AI / Hancock</p>
         <h1>One command center for CyberViser AI security engineering.</h1>
-        <p class="hero-text">A public-safe hub tying together Hancock, 0AI, fuzzing research, vulnerability intelligence, SOC automation, OSINT, detection engineering, secure code workflows, and deployment assets.</p>
+        <p class="hero-text">A public-safe hub tying together Hancock, 0AI, fuzzing research, vulnerability intelligence, SOC automation, OSINT, honeypot telemetry, detection engineering, secure code workflows, and deployment assets.</p>
         <div class="hero-actions">
           <a class="button primary" href="#stack">Use fuzzing + dataset stack</a>
+          <a class="button" href="#honeypot">View honeypot pipeline</a>
           <a class="button" href="#repos">Explore repository atlas</a>
-          <a class="button" href="https://github.com/0ai-Cyberviser/Hancock" rel="noopener">Open Hancock</a>
         </div>
         <div class="signal-row" aria-label="Platform capabilities">
-          <span>MITRE ATT&CK</span><span>NVD / CVE</span><span>CISA KEV</span><span>Sigma / YARA</span><span>OSS-Fuzz</span>
+          <span>MITRE ATT&CK</span><span>NVD / CVE</span><span>CISA KEV</span><span>Sigma / YARA</span><span>OSS-Fuzz</span><span>Honeypot telemetry</span>
         </div>
       </div>
       <aside class="terminal" aria-label="CyberViser terminal summary">
@@ -50,6 +51,7 @@
 platform: 0AI CyberViser
 agent: Hancock
 modes: pentest,soc,sigma,yara,ioc,osint,graphql,code,ciso,fuzz
+telemetry: isolated defensive honeypots
 site: cyberviserai.com
 privacy: public-safe only
 mission: ethical production-ready security automation</code></pre>
@@ -66,7 +68,7 @@ mission: ethical production-ready security automation</code></pre>
         <article><h3>AI security agents</h3><p>Specialist LLM workflows for pentest support, SOC triage, detection engineering, CISO reporting, secure code generation, and IR.</p></article>
         <article><h3>Vulnerability intelligence</h3><p>CVE, OSV, GHSA, KEV, and MITRE-aligned data pipelines for vulnerability research, enrichment, and prioritization.</p></article>
         <article><h3>Fuzzing and assurance</h3><p>Fuzz harness generation, crash minimization, regression reproducers, sanitizer triage, and secure SDLC evidence.</p></article>
-        <article><h3>Red and blue team tooling</h3><p>Recon, exploitation research, detections, OSINT, malware-analysis rules, and security operations workflows.</p></article>
+        <article><h3>Defensive deception telemetry</h3><p>Isolated honeypot sensors collect public internet attack patterns, sanitize telemetry, and transform observations into safe training data.</p></article>
       </div>
     </section>
 
@@ -80,7 +82,7 @@ mission: ethical production-ready security automation</code></pre>
         <article>
           <span class="step-index">01</span>
           <h3>Collect source signals</h3>
-          <p>Pull public-safe inputs from MITRE ATT&CK, NVD/CVE, CISA KEV, GHSA, OSV, Atomic Red Team, Sigma, YARA, and your curated public repos.</p>
+          <p>Pull public-safe inputs from MITRE ATT&CK, NVD/CVE, CISA KEV, GHSA, OSV, Atomic Red Team, Sigma, YARA, and curated honeypot telemetry.</p>
         </article>
         <article>
           <span class="step-index">02</span>
@@ -114,13 +116,62 @@ peachfuzz reproduce --target graphql reports/minimized/example.bin --output test
       </div>
     </section>
 
+    <section id="honeypot" class="section honeypot-section">
+      <div class="section-heading">
+        <p class="eyebrow">Defensive honeypot telemetry</p>
+        <h2>Collect real-world attack patterns without exposing production systems.</h2>
+        <p>CyberViser honeypots should run on isolated disposable infrastructure, outside Google Workspace and outside production repos. The public website documents the pipeline; the sensors collect sanitized adversary behavior for detection engineering, fuzz corpus mutation, and Hancock training datasets.</p>
+      </div>
+      <div class="workflow-grid">
+        <article>
+          <span class="step-index">A</span>
+          <h3>Isolated decoy surface</h3>
+          <p>Deploy low-interaction HTTP, SSH, API, GraphQL, and object-storage decoys on separate cloud hosts with no private credentials and no route to production.</p>
+        </article>
+        <article>
+          <span class="step-index">B</span>
+          <h3>Safe telemetry capture</h3>
+          <p>Capture requests, headers, payload shapes, timing, user agents, paths, auth attempts, and exploit fingerprints. Redact secrets, truncate payloads, hash IPs when publishing.</p>
+        </article>
+        <article>
+          <span class="step-index">C</span>
+          <h3>PeachTree normalization</h3>
+          <p>Normalize events into NDJSON/JSONL records with schema, source sensor, ATT&CK mapping, payload class, parser target, and dataset safety label.</p>
+        </article>
+        <article>
+          <span class="step-index">D</span>
+          <h3>PeachFuzz mutation</h3>
+          <p>Convert observed payload structures into fuzz seeds for HTTP, JSON, GraphQL, YAML, archive, and log parsers, then generate minimized reproducers.</p>
+        </article>
+      </div>
+      <div class="command-card">
+        <h3>Dataset record shape</h3>
+        <pre><code>{
+  "sensor": "http-lowint-01",
+  "timestamp": "2026-04-24T00:00:00Z",
+  "event_type": "http_probe",
+  "attack_surface": "decoy_api",
+  "payload_class": "path_traversal_probe",
+  "raw_payload_redacted": "GET /REDACTED HTTP/1.1",
+  "features": {"method":"GET","status":404,"body_len":0},
+  "mitre_attack": ["T1595", "T1190"],
+  "dataset_use": ["detection", "fuzz_seed", "llm_triage"],
+  "safety_label": "defensive_telemetry_sanitized"
+}</code></pre>
+      </div>
+      <div class="notice-card">
+        <h3>Guardrails</h3>
+        <p>Do not run honeypots on the same host as GitHub Pages, Google Workspace, admin consoles, email, Drive, or production services. Do not publish raw IPs, credentials, malware binaries, or private victim data. Publish sanitized aggregates, schemas, and reproducible safe samples only.</p>
+      </div>
+    </section>
+
     <section id="hancock" class="section highlight">
       <div>
         <p class="eyebrow">Flagship</p>
         <h2>Hancock: AI-powered cybersecurity agent suite.</h2>
         <p>Hancock is the CyberViser LLM security agent focused on pentesting, SOC analysis, Sigma/YARA generation, IOC enrichment, fuzzing support, CISO summaries, and production cybersecurity workflows.</p>
       </div>
-      <div class="mode-grid" aria-label="Hancock specialist modes"><span>Pentest</span><span>SOC</span><span>Sigma</span><span>YARA</span><span>IOC</span><span>OSINT</span><span>GraphQL</span><span>Code</span><span>CISO</span><span>Fuzz</span></div>
+      <div class="mode-grid" aria-label="Hancock specialist modes"><span>Pentest</span><span>SOC</span><span>Sigma</span><span>YARA</span><span>IOC</span><span>OSINT</span><span>GraphQL</span><span>Code</span><span>CISO</span><span>Fuzz</span><span>Honeypot</span></div>
     </section>
 
     <section id="repos" class="section">
@@ -144,11 +195,11 @@ peachfuzz reproduce --target graphql reports/minimized/example.bin --output test
       <div>
         <p class="eyebrow">Privacy boundary</p>
         <h2>Public site, private operations.</h2>
-        <p>This domain is designed as a public landing hub. Administrative systems, Google Drive, Google Admin, private repositories, internal notes, and sensitive infrastructure data stay off the public website.</p>
+        <p>This domain is designed as a public landing hub. Administrative systems, Google Drive, Google Admin, private repositories, internal notes, raw honeypot logs, and sensitive infrastructure data stay off the public website.</p>
       </div>
       <ol class="steps">
         <li><strong>DNS verification:</strong> TXT challenge records are public DNS records by design.</li>
-        <li><strong>Private assets:</strong> keep Drive/Admin material restricted to your Google account only.</li>
+        <li><strong>Private assets:</strong> keep Drive/Admin material and raw telemetry restricted to your private account/storage.</li>
         <li><strong>GitHub Pages:</strong> publish only sanitized public-safe content from this repository.</li>
       </ol>
     </section>
