@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CyberViser AI | 0AI Security Engineering Hub</title>
+  <meta name="description" content="CyberViser AI unifies Hancock, 0AI, fuzzing, vulnerability intelligence, SOC, IR, OSINT, and security engineering repositories into one public-safe mission-control hub." />
+  <meta name="theme-color" content="#00ff88" />
+  <meta property="og:title" content="CyberViser AI" />
+  <meta property="og:description" content="Hancock, 0AI, fuzzing, SOC, IR, OSINT, CVE intelligence, and security engineering repositories in one public-safe hub." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://cyberviserai.com/" />
+  <link rel="canonical" href="https://cyberviserai.com/" />
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="CyberViser AI home">
+      <span class="brand-mark">0AI</span>
+      <span><strong>CyberViser AI</strong><small>Security automation · LLM agents · fuzzing · CVE intelligence</small></span>
+    </a>
+    <nav class="nav" aria-label="Primary navigation">
+      <a href="#platform">Platform</a>
+      <a href="#hancock">Hancock</a>
+      <a href="#repos">Repos</a>
+      <a href="#privacy">Privacy</a>
+      <a class="nav-cta" href="https://github.com/0ai-Cyberviser" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">CyberViser / 0AI / Hancock</p>
+        <h1>One command center for CyberViser AI security engineering.</h1>
+        <p class="hero-text">A public-safe hub tying together Hancock, 0AI, fuzzing research, vulnerability intelligence, SOC automation, OSINT, detection engineering, secure code workflows, and deployment assets.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#repos">Explore repository atlas</a>
+          <a class="button" href="https://github.com/0ai-Cyberviser/Hancock" rel="noopener">Open Hancock</a>
+        </div>
+        <div class="signal-row" aria-label="Platform capabilities">
+          <span>MITRE ATT&CK</span><span>NVD / CVE</span><span>CISA KEV</span><span>Sigma / YARA</span><span>OSS-Fuzz</span>
+        </div>
+      </div>
+      <aside class="terminal" aria-label="CyberViser terminal summary">
+        <div class="terminal-bar"><span></span><span></span><span></span></div>
+        <pre><code>$ cyberviser status
+platform: 0AI CyberViser
+agent: Hancock
+modes: pentest,soc,sigma,yara,ioc,osint,graphql,code,ciso,fuzz
+site: cyberviserai.com
+privacy: public-safe only
+mission: ethical production-ready security automation</code></pre>
+      </aside>
+    </section>
+
+    <section id="platform" class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Architecture</p>
+        <h2>Security copilot platform, not a loose pile of repositories.</h2>
+        <p>Each public project is mapped into a capability lane so users, contributors, and enterprise evaluators can understand how the ecosystem fits together.</p>
+      </div>
+      <div class="capability-grid">
+        <article><h3>AI security agents</h3><p>Specialist LLM workflows for pentest support, SOC triage, detection engineering, CISO reporting, secure code generation, and IR.</p></article>
+        <article><h3>Vulnerability intelligence</h3><p>CVE, OSV, GHSA, KEV, and MITRE-aligned data pipelines for vulnerability research, enrichment, and prioritization.</p></article>
+        <article><h3>Fuzzing and assurance</h3><p>Fuzz harness generation, crash minimization, regression reproducers, sanitizer triage, and secure SDLC evidence.</p></article>
+        <article><h3>Red and blue team tooling</h3><p>Recon, exploitation research, detections, OSINT, malware-analysis rules, and security operations workflows.</p></article>
+      </div>
+    </section>
+
+    <section id="hancock" class="section highlight">
+      <div>
+        <p class="eyebrow">Flagship</p>
+        <h2>Hancock: AI-powered cybersecurity agent suite.</h2>
+        <p>Hancock is the CyberViser LLM security agent focused on pentesting, SOC analysis, Sigma/YARA generation, IOC enrichment, fuzzing support, CISO summaries, and production cybersecurity workflows.</p>
+      </div>
+      <div class="mode-grid" aria-label="Hancock specialist modes"><span>Pentest</span><span>SOC</span><span>Sigma</span><span>YARA</span><span>IOC</span><span>OSINT</span><span>GraphQL</span><span>Code</span><span>CISO</span><span>Fuzz</span></div>
+    </section>
+
+    <section id="repos" class="section">
+      <div class="section-heading split">
+        <div>
+          <p class="eyebrow">Repository atlas</p>
+          <h2>Public-safe repo grid.</h2>
+          <p>Private repositories, Google Drive links, Google Admin URLs, tokens, DNS secrets, and private metadata are intentionally excluded.</p>
+        </div>
+        <div class="repo-tools">
+          <label class="search-label" for="repo-search">Search repositories</label>
+          <input id="repo-search" type="search" placeholder="Search Hancock, fuzz, CVE, SOC..." />
+          <select id="repo-filter" aria-label="Filter repositories by category"><option value="all">All categories</option></select>
+        </div>
+      </div>
+      <div id="repo-count" class="repo-count">Loading repositories…</div>
+      <div id="repo-grid" class="repo-grid" aria-live="polite"></div>
+    </section>
+
+    <section id="privacy" class="section deploy">
+      <div>
+        <p class="eyebrow">Privacy boundary</p>
+        <h2>Public site, private operations.</h2>
+        <p>This domain is designed as a public landing hub. Administrative systems, Google Drive, Google Admin, private repositories, internal notes, and sensitive infrastructure data stay off the public website.</p>
+      </div>
+      <ol class="steps">
+        <li><strong>DNS verification:</strong> TXT challenge records are public DNS records by design.</li>
+        <li><strong>Private assets:</strong> keep Drive/Admin material restricted to your Google account only.</li>
+        <li><strong>GitHub Pages:</strong> publish only sanitized public-safe content from this repository.</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Maintained by <a href="https://github.com/0ai-Cyberviser" rel="noopener">Johnny Watters / 0ai-Cyberviser</a>. Built for safe, ethical, production-ready cybersecurity automation.</p>
+    <p><a href="mailto:0ai@cyberviserai.com">0ai@cyberviserai.com</a> · <a href="https://github.com/0ai-Cyberviser/CyberViser-ViserHub" rel="noopener">Website source</a></p>
+  </footer>
+
+  <script src="assets/app.js" defer></script>
+</body>
+</html>
