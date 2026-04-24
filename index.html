@@ -21,6 +21,7 @@
     </a>
     <nav class="nav" aria-label="Primary navigation">
       <a href="#platform">Platform</a>
+      <a href="#stack">Stack</a>
       <a href="#hancock">Hancock</a>
       <a href="#repos">Repos</a>
       <a href="#privacy">Privacy</a>
@@ -35,7 +36,8 @@
         <h1>One command center for CyberViser AI security engineering.</h1>
         <p class="hero-text">A public-safe hub tying together Hancock, 0AI, fuzzing research, vulnerability intelligence, SOC automation, OSINT, detection engineering, secure code workflows, and deployment assets.</p>
         <div class="hero-actions">
-          <a class="button primary" href="#repos">Explore repository atlas</a>
+          <a class="button primary" href="#stack">Use fuzzing + dataset stack</a>
+          <a class="button" href="#repos">Explore repository atlas</a>
           <a class="button" href="https://github.com/0ai-Cyberviser/Hancock" rel="noopener">Open Hancock</a>
         </div>
         <div class="signal-row" aria-label="Platform capabilities">
@@ -65,6 +67,50 @@ mission: ethical production-ready security automation</code></pre>
         <article><h3>Vulnerability intelligence</h3><p>CVE, OSV, GHSA, KEV, and MITRE-aligned data pipelines for vulnerability research, enrichment, and prioritization.</p></article>
         <article><h3>Fuzzing and assurance</h3><p>Fuzz harness generation, crash minimization, regression reproducers, sanitizer triage, and secure SDLC evidence.</p></article>
         <article><h3>Red and blue team tooling</h3><p>Recon, exploitation research, detections, OSINT, malware-analysis rules, and security operations workflows.</p></article>
+      </div>
+    </section>
+
+    <section id="stack" class="section stack-section">
+      <div class="section-heading">
+        <p class="eyebrow">Fuzzing + dataset workflow</p>
+        <h2>Use the public hub as the front door for fuzzing tools and dataset generation.</h2>
+        <p>The site links the public project surface while your Google Admin, Google Drive, and private working files remain private to your account. Use public repos for code and docs; use private storage for raw corpora, unpublished datasets, credentials, crash dumps, and admin records.</p>
+      </div>
+      <div class="workflow-grid">
+        <article>
+          <span class="step-index">01</span>
+          <h3>Collect source signals</h3>
+          <p>Pull public-safe inputs from MITRE ATT&CK, NVD/CVE, CISA KEV, GHSA, OSV, Atomic Red Team, Sigma, YARA, and your curated public repos.</p>
+        </article>
+        <article>
+          <span class="step-index">02</span>
+          <h3>Generate fuzz harnesses</h3>
+          <p>Use PeachFuzz and Hancock fuzz mode to generate target harnesses, run coverage-guided tests, minimize crashes, and produce pytest/regression reproducers.</p>
+        </article>
+        <article>
+          <span class="step-index">03</span>
+          <h3>Build training datasets</h3>
+          <p>Convert validated security examples into JSONL datasets for Hancock: prompt, context, tool output, triage, patch notes, detection logic, and safety classification.</p>
+        </article>
+        <article>
+          <span class="step-index">04</span>
+          <h3>Publish only sanitized outputs</h3>
+          <p>Promote public docs, release notes, examples, and safe demos to this site while keeping private Drive/Admin assets and sensitive corpora out of GitHub Pages.</p>
+        </article>
+      </div>
+      <div class="link-grid">
+        <a href="https://0ai-cyberviser.github.io/0ai/" rel="noopener">0AI project page</a>
+        <a href="https://cyberviser.github.io/Hancock/" rel="noopener">Hancock docs/demo</a>
+        <a href="https://github.com/0ai-Cyberviser/peachfuzz" rel="noopener">PeachFuzz repo</a>
+        <a href="https://github.com/0ai-Cyberviser/Hancock" rel="noopener">Hancock repo</a>
+      </div>
+      <div class="command-card">
+        <h3>Core fuzz workflow</h3>
+        <pre><code>pip install -e ".[dev,fuzz]"
+python -m peachfuzz_ai.cli run --target json --runs 250
+peachfuzz run --target graphql --backend peachtrace --runs 500
+peachfuzz minimize --target graphql reports/crashes/example.bin
+peachfuzz reproduce --target graphql reports/minimized/example.bin --output tests/regression</code></pre>
       </div>
     </section>
 
